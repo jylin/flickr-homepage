@@ -1,0 +1,81 @@
+<html>
+<head>
+<title>New Tab</title>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  background: #212124;
+  overflow: hidden;
+}
+iframe {
+  vertical-align: middle;
+  height: 100%;
+  width: 100%;
+}
+#thumbnail-anchor {
+  position: absolute;
+  overflow: hidden;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-position: center center;
+  background-size: 100%;
+  background-repeat: no-repeat;
+}
+#thumbnail {
+  width: 100%;
+  white-space: nowrap;
+  text-align: center;
+  height: auto;
+  vertical-align: middle;
+  margin: auto 0;
+}
+</style>
+</head>
+<body>
+<iframe id="iframe" frameborder="0" scrolling="no"></iframe>
+<a id="thumbnail-anchor"></a>
+<script>
+var dateString = new Date().toISOString().slice(0, 10);
+
+var process = function(dataStr) {
+  var data = JSON.parse(dataStr);
+  var photos = data.photos.photo;
+  var r = Math.floor(Math.random() * photos.length);
+  var photo = photos[r];
+
+  var flickrLink = 'https://www.flickr.com/photos/' + photo.owner + '/' + photo.id;
+  var anchor = document.getElementById('thumbnail-anchor');
+  anchor.href = flickrLink;
+  anchor.style.backgroundImage = "url('" + photo.url_l + "')";
+
+  var frame = document.getElementById('iframe');
+  frame.onload = function() {
+    setTimeout(function() {
+      anchor.style.display = 'none';
+    }, 500);
+  }
+  frame.src = flickrLink + '/embedded/';
+}
+
+var cachedData = localStorage.getItem(dateString);
+if (cachedData) {
+  process(cachedData);
+} else {
+  localStorage.clear();
+  var xmlHttp = new XMLHttpRequest();
+  xmlHttp.onreadystatechange = function() {
+    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+      var dataText = xmlHttp.responseText;
+      localStorage.setItem(dateString, dataText);
+      process(dataText);
+    }
+  };
+  xmlHttp.open("GET", 'https://api.flickr.com/services/rest/?method=flickr.interestingness.getList&api_key=3103129f7e79ace086511b6c18fa212f&format=json&nojsoncallback=1&extras=url_n,url_l,url_m,media,path_alias&per_page=70&' + dateString, true);
+  xmlHttp.send();
+}
+</script>
+</body>
+</html>
